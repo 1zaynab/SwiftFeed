@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../selected_category/category.dart'; // Import the Category class
+import '../category/category.dart'; // Import the Category class
 
 class InterestPage extends StatefulWidget {
   final String id; // Add id parameter
@@ -108,12 +108,12 @@ class _InterestPageState extends State<InterestPage> {
             children: [
               const SizedBox(height: 30),
               const Text(
-                "What's interest you?",
+                "Choose your Interests",
                 style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 16.0),
               Text(
-                'Follow Topics to influence the stories you see',
+                'Follow Topics to influence the Swifties you see',
                 style: TextStyle(fontSize: 16.0, color: Colors.grey[600]),
               ),
               const SizedBox(height: 16.0),
