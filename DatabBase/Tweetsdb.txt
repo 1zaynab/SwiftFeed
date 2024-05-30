@@ -1,0 +1,43 @@
+-- Create the Tweetsdb database
+CREATE DATABASE Tweetsdb;
+
+-- Use the Tweetsdb database
+USE Tweetsdb;
+
+-- Create the Tweets table
+CREATE TABLE Tweets (
+    t_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Name VARCHAR(MAX),
+    Username VARCHAR(MAX),
+    Timestamp DATETIME,
+    Verified INT,
+    Content NVARCHAR(MAX),
+    Category NVARCHAR(MAX),
+    Comments NVARCHAR(MAX),
+    Retweets NVARCHAR(MAX),
+    Likes NVARCHAR(MAX),
+    Analytics NVARCHAR(MAX),
+    Tags NVARCHAR(MAX),
+    Mentions NVARCHAR(MAX),
+    Emojis NVARCHAR(MAX),
+    Profile_Image VARCHAR(MAX),
+    Tweet_Link NVARCHAR(MAX),
+    Tweet_Image VARCHAR(MAX)
+);
+
+-- Create the Hashtags table
+CREATE TABLE Hashtags (
+    h_ID INT PRIMARY KEY AUTO_INCREMENT,
+    Username VARCHAR(255),
+    Content NVARCHAR(MAX),
+    Tweet_Image VARCHAR(MAX)
+);
+
+-- Create the Tags table
+CREATE TABLE Tag (
+    tag_ID INT PRIMARY KEY AUTO_INCREMENT,
+    h_ID INT,
+    t_ID INT,
+    FOREIGN KEY (h_ID) REFERENCES Hashtags(h_ID),
+    FOREIGN KEY (t_ID) REFERENCES Tweets(t_ID)
+);
