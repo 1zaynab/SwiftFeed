@@ -1,31 +1,3 @@
-// import 'package:flutter/material.dart';
-// import 'article.dart';
-//
-// class ArticleProvider extends ChangeNotifier {
-//   List<Article> _savedArticles = [];
-//   List<Article> _likedArticles = [];
-//
-//   List<Article> get savedArticles => _savedArticles;
-//   List<Article> get likedArticles => _likedArticles;
-//
-//   void toggleSaveArticle(Article article) {
-//     if (_savedArticles.contains(article)) {
-//       _savedArticles.remove(article);
-//     } else {
-//       _savedArticles.add(article);
-//     }
-//     notifyListeners();
-//   }
-//
-//   void toggleLikeArticle(Article article) {
-//     if (_likedArticles.contains(article)) {
-//       _likedArticles.remove(article);
-//     } else {
-//       _likedArticles.add(article);
-//     }
-//     notifyListeners();
-//   }
-// }
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';

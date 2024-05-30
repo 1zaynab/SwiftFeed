@@ -1,148 +1,190 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:finalapp/screens/custom_navigation_bar.dart';
-import 'package:finalapp/tweet_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../selected_category/category.dart'; // Import the Category class
 
 class InterestPage extends StatefulWidget {
-  final String id;
+  final String id; // Add id parameter
 
-  InterestPage({required this.id});
+  const InterestPage({Key? key, required this.id}) : super(key: key); // Update constructor to accept id
 
   @override
   _InterestPageState createState() => _InterestPageState();
 }
 
 class _InterestPageState extends State<InterestPage> {
-  final APIService apiService = APIService(baseUrl: 'http://10.0.2.2:5000');
-  bool _isPoliticsChecked = false;
-  bool _isTechnologyChecked = false;
-  bool _isEntertainmentChecked = false;
-  List<String> _interests = [];
+  final List<Category> _categories = [
+    Category(name: 'Arts', icon: Icons.palette),
+    Category(name: 'News', icon: Icons.article),
+    Category(name: 'Business', icon: Icons.business_center),
+    Category(name: 'Celebrity', icon: Icons.star),
+    Category(name: 'Daily Life', icon: Icons.wb_sunny),
+    Category(name: 'Family', icon: Icons.family_restroom),
+    Category(name: 'Fashion', icon: Icons.checkroom),
+    Category(name: 'Film & TV', icon: Icons.movie),
+    Category(name: 'Fitness', icon: Icons.fitness_center),
+    Category(name: 'Food', icon: Icons.restaurant),
+    Category(name: 'Gaming', icon: Icons.videogame_asset),
+    Category(name: 'Education', icon: Icons.school),
+    Category(name: 'Music', icon: Icons.music_note),
+    Category(name: 'Hobbies', icon: Icons.brush),
+    Category(name: 'Relationships', icon: Icons.favorite),
+    Category(name: 'Science', icon: Icons.science),
+    Category(name: 'Sports', icon: Icons.sports),
+    Category(name: 'Travel', icon: Icons.travel_explore),
+    Category(name: 'Youth', icon: Icons.child_care),
+  ];
 
-  Future<void> _loadInterests() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _interests = prefs.getStringList('interests') ?? [];
-      _isPoliticsChecked = _interests.contains('Politics');
-      _isTechnologyChecked = _interests.contains('Technology');
-      _isEntertainmentChecked = _interests.contains('Entertainment');
-    });
-  }
+  final List<bool> _selectedCategories = List.generate(19, (_) => false);
 
   Future<void> _saveInterests() async {
-    final prefs = await SharedPreferences.getInstance();
-    _interests.clear();
-    if (_isPoliticsChecked) _interests.add('Politics');
-    if (_isTechnologyChecked) _interests.add('Technology');
-    if (_isEntertainmentChecked) _interests.add('Entertainment');
-    await prefs.setStringList('interests', _interests);
+    List<String> selectedInterests = [];
+    for (int i = 0; i < _selectedCategories.length; i++) {
+      if (_selectedCategories[i]) {
+        selectedInterests.add(_categories[i].name);
+      }
+    }
 
-    //Save interests to Firestore
-    await FirebaseFirestore.instance.collection('users').doc(widget.id).set({
-      'interests': _interests,
-    }, SetOptions(merge: true));
+    if (selectedInterests.isNotEmpty) {
+      // Save selected interests to Firebase
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(widget.id).update({
+          'interests': selectedInterests,
+        });
 
-    // Navigate to HomePage after saving data
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CustomNavigationBar(title: '', apiService: apiService,),
-      ),
-    );
-  }
+        // Save selected interests to SharedPreferences
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setStringList('interests', selectedInterests);
 
-  @override
-  void initState() {
-    super.initState();
-    _loadInterests();
+        // Navigate to HomePage or another page as needed
+        Navigator.pushNamed(
+          context,
+          '/home',
+          arguments: selectedInterests, // Pass selected interests as arguments
+        );
+      } catch (e) {
+        print('Error saving interests: $e');
+      }
+    } else {
+      showDialog(
+        context: context,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: const Text('Error'),
+            content: const Text('Please select at least one category.'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          // Background Gradient
-          Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0xFFE0F2F1), // Light blue
-                  Color(0xFFA9C5C2), // Darker blue
-                ],
-              ),
-            ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent, // Start with transparent
+              Color(0xFFFDABAB), // End with your preferred color
+            ],
           ),
-          // Center the content
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Select Interests',
-                    style: TextStyle(
-                      color: Colors.pink,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
+        ),
+        // Use the same background color as WelcomePage
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 30),
+              const Text(
+                "What's interest you?",
+                style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16.0),
+              Text(
+                'Follow Topics to influence the stories you see',
+                style: TextStyle(fontSize: 16.0, color: Colors.grey[600]),
+              ),
+              const SizedBox(height: 16.0),
+              Expanded(
+                child: GridView.builder(
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 2 / 2.5,
+                    mainAxisSpacing: 16,
+                    crossAxisSpacing: 16,
                   ),
-                  const SizedBox(height: 16.0),
-                  CheckboxListTile(
-                    title: const Text('Politics'),
-                    value: _isPoliticsChecked,
-                    activeColor: Colors.pinkAccent,
-                    checkColor: Colors.white,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _isPoliticsChecked = value ?? false;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Technology'),
-                    value: _isTechnologyChecked,
-                    activeColor: Colors.pinkAccent,
-                    checkColor: Colors.white,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _isTechnologyChecked = value ?? false;
-                      });
-                    },
-                  ),
-                  CheckboxListTile(
-                    title: const Text('Entertainment'),
-                    value: _isEntertainmentChecked,
-                    activeColor: Colors.pinkAccent,
-                    checkColor: Colors.white,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _isEntertainmentChecked = value ?? false;
-                      });
-                    },
-                  ),
-                  const SizedBox(height: 16.0),
-                  ElevatedButton(
-                    onPressed: _saveInterests,
-                    style: ElevatedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      backgroundColor: Colors.pinkAccent.shade700,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10.0),
+                  itemCount: _categories.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedCategories[index] = !_selectedCategories[index];
+                        });
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          color: _selectedCategories[index]
+                              ? const Color(0xFFD99D9F) // Baby pink color
+                              : Colors.grey[200],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              _categories[index].icon,
+                              size: 40,
+                              color: _selectedCategories[index]
+                                  ? Colors.white
+                                  : Colors.grey[700],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              _categories[index].name,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: _selectedCategories[index]
+                                    ? Colors.white
+                                    : Colors.grey[700],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    child: const Text('Save Interests'),
-                  ),
-                ],
+                    );
+                  },
+                ),
               ),
-            ),
+              const SizedBox(height: 16.0),
+              Center(
+                child: ElevatedButton(
+                  onPressed: _saveInterests,
+                  child: const Text(
+                    'Build My Feed',
+                    style: TextStyle(fontSize: 20, color: Colors.white60), // Set text color to pink[400]
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white70, backgroundColor: const Color(
+                      0xFFC97A7C), // Set text color to pink[400]
+                    padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
