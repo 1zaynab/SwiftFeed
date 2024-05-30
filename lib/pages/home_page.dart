@@ -1,6 +1,8 @@
+
 import 'package:final_project/classes/article.dart';
 import 'package:final_project/tweet_service.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'article_detail_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -15,19 +17,36 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   late Future<List<Article>> _tweetsFuture;
+  List<String>? _userInterests;
 
   @override
   void initState() {
     super.initState();
+    // Initialize with a placeholder future
+    _tweetsFuture = Future.value([]);
+    _loadInterestsAndTweets();
+  }
+
+  Future<void> _loadInterestsAndTweets() async {
+    // Load user interests from SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    _userInterests = prefs.getStringList('interests') ?? [];
+
+    // Load tweets after loading interests
     _loadTweets();
   }
 
   Future<void> _loadTweets() async {
     setState(() {
+      _tweetsFuture = widget.apiService.getTweets();
     });
-    _tweetsFuture = widget.apiService.getTweets();
-    setState(() {
-    });
+  }
+
+  List<Article> _filterArticles(List<Article> articles) {
+    if (_userInterests == null || _userInterests!.isEmpty) {
+      return articles;
+    }
+    return articles.where((article) => _userInterests!.contains(article.category)).toList();
   }
 
   @override
@@ -69,9 +88,14 @@ class _HomePageState extends State<HomePage> {
                     child: Text('No tweets found'),
                   );
                 } else {
-                  final articles = snapshot.data!;
-                  final topArticles = articles.take(5).toList();
-                  final otherArticles = articles.skip(5).toList();
+                  final articles = _filterArticles(snapshot.data!);
+                  if (articles.isEmpty) {
+                    return const Center(
+                      child: Text('No articles found for selected interests'),
+                    );
+                  }
+                  final topArticles = articles.take(3).toList(); // Change here to take 3 articles
+                  final otherArticles = articles.skip(3).toList(); // Change here to skip 3 articles
 
                   return SingleChildScrollView(
                     child: Column(
@@ -108,7 +132,7 @@ class _HomePageState extends State<HomePage> {
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(30),
                                   ),
-                                  elevation: 5,
+                                  elevation: 3,
                                   child: SizedBox(
                                     width: 200, // Adjust the width as needed
                                     child: Column(
@@ -138,13 +162,6 @@ class _HomePageState extends State<HomePage> {
                                                   ),
                                                 ),
                                                 const SizedBox(height: 4),
-                                                Text(
-                                                  article.timestamp,
-                                                  style: const TextStyle(
-                                                    color: Colors.grey,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
                                                 Text(
                                                   article.content,
                                                   maxLines: article.tweetImage.isNotEmpty ? 1 : 5,
@@ -256,7 +273,7 @@ class _HomePageState extends State<HomePage> {
                                           ),
                                           Row(
                                             children: [
-                                               Icon(Icons.repeat, color: Colors.cyan[100]),
+                                              Icon(Icons.repeat, color: Colors.cyan[100]),
                                               const SizedBox(width: 4),
                                               Text(article.analytics),
                                             ],
